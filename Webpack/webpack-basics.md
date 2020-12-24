@@ -42,6 +42,57 @@ Webpack is a static module bundler for modern JavaScript applications. When webp
    ie9+
    ie8 & <8 也可以通过 polyfill 的方式处理，但是应该用不上了
 
+## Core concepts in depth
+
+1. Entry point
+   - 三种定义方式
+     - 单一入口文件
+       ```js
+       module.exports = {
+         entry: './path/to/file.js',
+       };
+       // 是下面方式的简写
+       module.exports = {
+         entry: {
+           main: './path/to/file.js', // main是webpack默认的entry文件的名称，输出也是以main作为名称
+         },
+       };
+       ```
+     - 数组。注意虽然是多入口，但是输出文件依然是**一个**
+       ```js
+       module.exports = {
+         entry: ['./path/to/file1.js', './path/to/file2.js'],
+       };
+       ```
+       Q: 这种方式的意义是什么？文档中提到的`there is not much flexibility in extending or scaling your configuration with this syntax`是指什么问题？
+       可以参见这部分关于 scalable webpack config 的说明
+       ```
+       "Scalable webpack configurations" are ones that can be reused and combined with other partial configurations. This is a popular technique used to separate concerns by environment, build target, and runtime. They are then merged using specialized tools like webpack-merge.
+       ```
+       Q: 既然使用了数组，那么顺序应该是重要的？
+       Q: 应该适用于多页面中使用了同一个第三方库的情况，这样就不用重复引用了同样的代码了。而是先提取出公用的代码提前引入？
+     - 对象。注意是多入口文件，而是是多出口文件
+       注意适合于 multi-page application，每个入口一个对应的 bundle，每个 bundle 都有自己的 dependency graph
+       ```js
+       module.exports = {
+         entry: {
+           main: './path/to/main.js',
+           vendor: './path/to/vendor.js',
+         },
+         output: {
+           // [name]是上面entry对象key的名字
+           // [contenthash]是bundle对应的hash值，每个单个的输出都有自己的hash值。可以通过hash来帮助浏览器决定哪些文件需要重新fetch，换句话说就是利于缓存。
+           filename: '[name].[contenthash].bundle.js',
+         },
+       };
+       ```
+       Q: 每个 key 对应的值也可以是数组
+       注意 plugin 也可以创建 entry point，当是这种情况的时候，可以指定 entry 的值为空对象
+       Best practice: Only one entry point for each HTML document
+   - 其他
+     - [ ] [optimization.splitChunks](https://webpack.js.org/configuration/optimization/#optimizationsplitchunks) 来处理 vendors 的 js
+     - [ ] 根据文档，我认为其中一个可以优化的方向是 splitChunks，因为 apex 是多页面应用，client-dashboard, opportunities 都有对应的 bundle 文件，如果我们可以提取公共的代码，比如`apex/library`和`oui`的代码，那么可以更好的对这些部分进行缓存，尽快的完成渲染。注意量化结果
+
 ## Questions
 
 [ ] chunks 的基本概念
@@ -50,6 +101,10 @@ Webpack is a static module bundler for modern JavaScript applications. When webp
 [ ] webpack 与 nodejs 的关系？nodejs 是怎么处理 webpack 的？webpack 可以访问 nodejs 的什么参数？
 [ ] webpack 是怎么寻找 config 文件的，是从当前目录开始一直往上找吗（类似 node_modules）？那么谁可以算作 root，怎么指定 root
 [ ] 微前端或者多个 package 的结构是否可以分别指定对应的 webpack 设置？可以 extends common 的内容吗
+[ ] 如何查看 webpack 的 dependency graph, some resources as below
+
+      - https://medium.com/@joeclever/three-simple-ways-to-inspect-a-webpack-bundle-7f6a8fe7195d
+      - https://survivejs.com/webpack/optimizing/build-analysis/
 
 ## Further reading
 
@@ -58,3 +113,6 @@ Webpack is a static module bundler for modern JavaScript applications. When webp
 - [ ] [Manually Bundling an Application](https://www.youtube.com/watch?v=UNMkLHzofQI&ab_channel=WebTechTalks)
 - [ ] [Live Coding a Simple Module Bundler](https://www.youtube.com/watch?v=Gc9-7PBqOC8&ab_channel=YouGottaLoveFrontend)
 - [ ] [Detailed Explanation of a Simple Module Bundler](https://github.com/ronami/minipack)
+
+[ ] [Webpack merge](https://github.com/survivejs/webpack-merge)
+[ ] [Webpack free book](https://survivejs.com/webpack/foreword/)
