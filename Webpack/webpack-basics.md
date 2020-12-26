@@ -92,6 +92,105 @@ Webpack is a static module bundler for modern JavaScript applications. When webp
    - 其他
      - [ ] [optimization.splitChunks](https://webpack.js.org/configuration/optimization/#optimizationsplitchunks) 来处理 vendors 的 js
      - [ ] 根据文档，我认为其中一个可以优化的方向是 splitChunks，因为 apex 是多页面应用，client-dashboard, opportunities 都有对应的 bundle 文件，如果我们可以提取公共的代码，比如`apex/library`和`oui`的代码，那么可以更好的对这些部分进行缓存，尽快的完成渲染。注意量化结果
+2. Output
+   - 主要定义方式
+     - 只有唯一输出文件，指定文件位置和名字即可
+       ```js
+       module.exports = {
+         output: {
+           filename: 'bundle.js',
+         },
+       };
+       ```
+     - 多入口对应多输出，需要指定唯一的名字针对每个 chunk 输出
+       ```js
+       module.exports = {
+         output: {
+           filename: '[name].js', // name是entry对应的key的值，比如main，vendor
+           path: __dirname + '/dist', // __dirname应该是nodejs的参数，指当前的文件所在的目录
+         },
+       };
+       ```
+       Q: 进一步熟悉\_\_dirname 和 nodejs 的 resolve 函数
+       Q: 一些其他常用的 key，比如 publicPath
+3. Loaders
+   transformations that applied to the source code of a module. 在解析到 import 并且资源是其他类型时，将他们进行转换，变成 webpack 可以理解的 js module。在使用前需要下载对应的 loader 的 npm 包
+
+   - 类型
+     - preLoaders
+     - loaders
+     - postLoaders
+       Q: 这几种是怎么区分的？怎么在 config.js 文件中定义？
+   - 使用方式
+
+     - configuration 文件，最普遍的方式
+     - inline: 在每个 import 语句的时候指定，会 override，config.js 中定义的 loaders
+
+       ```js
+       // !是不同loader的分割符，如果prefix with !/!! 的话会disable默认的loader
+       import Styles from 'style-loader!css-loader?modules!./styles.css';
+       ```
+
+     - cli: 使用 webpack 命令的时候指定
+
+   - 特性
+
+     - 可以 chain 多个 loader 处理同一类型的文件、资源，但是注意是逆序的处理，最后定义的 loader 会优先 apply 到资源上
+     - loaders 可以是同步的也可以是异步的
+       Q: 例子？什么情况下需要异步的 loader？怎么设置？如果多个 loader，那么之后的 loader 会等待异步的结果返回吗？
+     - 如果不适用 loader 的 option 属性就表示使用该 loader 默认的 options
+     - loader 运行在 nodejs 中，所以任何 nodejs 可以做的事情，loader 都可以
+
+   - Resolve loaders
+     loader 使用普通的[module resolution](https://webpack.js.org/concepts/module-resolution/)，通常是从 node_modules 里装载的
+     Q: 关于如何[写一个 loader](https://webpack.js.org/contribute/writing-a-loader/)?
+     Q: 进一步了解[module resolution](https://webpack.js.org/concepts/module-resolution/)
+
+4. Plugins
+   任何 loader 不能做的事情都可以交给 plugin 来处理
+
+   - 原理
+     每个 plugin 就是一个至少拥有 apply 方法的 js object，webpack compiler 在运行是会调用 plugin 的 apply 方法，此时可以使用所有 compilation 的 lifecycle
+
+     ```js
+     const pluginName = 'ConsoleLogOnBuildWebpackPlugin';
+
+     class ConsoleLogOnBuildWebpackPlugin {
+       apply(compiler) {
+         compiler.hooks.run.tap(pluginName, (compilation) => {
+           console.log('The webpack is starting');
+         });
+       }
+     }
+     module.exports = ConsoleLogOnBuildWebpackPlugin;
+     ```
+
+   - 使用: 两种方式
+
+     - 在 config 文件中指定
+       plugin 在使用时必须 new 一个新的实例
+
+     ```js
+     const HtmlWebpackPlugin = require('html-webpack-plugin');
+     module.exports = {
+       plugins: [new HtmlWebpackPlugin({ template: './src/index.html' })],
+     };
+     ```
+
+     - 在文件中使用
+
+     ```js
+     const webpack = require('webpack'); //to access webpack runtime
+     const configuration = require('./webpack.config.js');
+
+     let compiler = webpack(configuration);
+
+     new webpack.ProgressPlugin().apply(compiler);
+
+     compiler.run(function (err, stats) {
+       // ...
+     });
+     ```
 
 ## Questions
 
@@ -105,6 +204,8 @@ Webpack is a static module bundler for modern JavaScript applications. When webp
 
       - https://medium.com/@joeclever/three-simple-ways-to-inspect-a-webpack-bundle-7f6a8fe7195d
       - https://survivejs.com/webpack/optimizing/build-analysis/
+
+[ ] compare with other tools, roman, rollup, gulp, grunt
 
 ## Further reading
 
