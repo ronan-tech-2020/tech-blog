@@ -192,6 +192,64 @@ Webpack is a static module bundler for modern JavaScript applications. When webp
      });
      ```
 
+5. Configuration: 更多的内容在[configuration](https://webpack.js.org/configuration/)
+
+   - `module.exports`的值可以是对象，function，promise 或者数组
+   - Multiple targets: 不同的打包方式, e.g. commonjs, amd
+     config.js 文件可以输出一个数组，包括针对不同 target 的输出
+     ```js
+     module.exports = [
+       {
+         output: {
+           filename: './dist-amd.js',
+           libraryTarget: 'amd',
+         },
+         name: 'amd',
+         entry: './app.js',
+         mode: 'production',
+       },
+       {
+         output: {
+           filename: './dist-commonjs.js',
+           libraryTarget: 'commonjs',
+         },
+         name: 'commonjs',
+         entry: './app.js',
+         mode: 'production',
+       },
+     ];
+     ```
+   - config 文件可以使用 ts, babel and jsx, coffeescript 来写。babel & jsx 的方式有点像 xml
+
+6. Modules
+
+   - webpack module 能够解析通过以下方式定义的 dependencies
+     - es2015 `import`
+     - commonjs `require`
+     - amd `define` or `require`
+     - `@import` in css/less/sass
+     - url in stylesheet e.g. `url()` or `<img src="..."/>`
+   - webpack 原生支持主要的 js & assets modules
+     - ECMAScript modules
+     - CommonJS modules
+     - AMD modules
+     - Assets
+     - WebAssembly modules
+   - resolution: webpack 如何找到对应的 dependency
+
+     - Resolve rules: webpack 使用`enhanced-resolve`，支持三种 path 定义
+
+       - absolute paths: 不需要额外的 resolution
+       - relative paths: 根据 context path(import/require 所在文件的路径)，拼接成 absolute path
+       - module paths: 会在 config 中的 `resolve.module` 属性中定义寻找对应的 module。module path 也可以是在 config 中使用`resolve.alias`定义好的 alias。同时`package.json`中的一些属性也会影响 resolution。module 是文件还是文件夹也有对应不同的处理策略
+
+       Q: 什么是 enhanced-resolve?
+
+     - Resolve loaders
+       类似于上面 resolve files 的规则，但是还可以使用 config 中的`resolveLoader`来定义额外的规则
+
+     - Caching: 每个文件访问都被 cache 了，watch 的时候只有修改的文件会重新 cache。
+
 ## Questions
 
 [ ] chunks 的基本概念
