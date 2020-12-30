@@ -250,6 +250,59 @@ Webpack is a static module bundler for modern JavaScript applications. When webp
 
      - Caching: 每个文件访问都被 cache 了，watch 的时候只有修改的文件会重新 cache。
 
+   - Module Federation
+     multiple separate builds can be devloped and deployed individually, known as micro-frontends
+     没太看懂，但是根据主题应该是和微前端有关，比较重要。可以是我扩展的技术点和落地到 apex 项目中的内容。其中比较重要的包括
+     [component library as container](https://webpack.js.org/concepts/module-federation/#components-library-as-container)
+
+   - Dependency graph
+     注意: bundle app code to one file is benefited http/1.1 client, but for http/2, code splitting can be considered as best practice
+     Q: 可以考虑根据用户浏览器支持的 http 版本使用不同的 bundle 方案，但是不知道有多大的价值
+
+   - Targets
+     因为 js 用于后端或者前端，所以 webpack 支持打包出来的内容用于不同的 targets/environments。
+
+     - 可以使用的选项
+       - node
+       ```js
+       module.exports = {
+         target: 'node12.18',
+       };
+       ```
+       - electron
+       - web (default)
+       - webworker
+       - browserslist: https://github.com/browserslist/browserslist#queries
+         可以定义在`package.json`中或者`.browserslistrc`中，能够根据提供的查询关键字(比如 last 2 versions, > 1%等)，自动查找(browserslist 使用 caniuse 的数据)对应的浏览器或者 node 版本信息。
+         Q: browserslist 如何影响打包结果？
+
+   - Watch and WatchOptions
+     - enable watch
+       ```js
+       module.exports = {
+         watch: true,
+       };
+       ```
+     - watch options: 用来 customize watch 的参数
+       - 可以 debounce 一段时间内的 changes 一起 rebuild
+       - 可以忽略监听一些文件的改动来减少 cpu 或者内存的使用，比如 node_modules
+       - 可以设置 check changes 的间隔，类似心跳
+   - Externals
+     exclude some dependencies from output bundle, e.g jquery or other libraries that can be loaded from cdn
+   - Performance
+     可以提供参数来让 webpack 输出一些提升性能的 warning 或者 error
+   - Node
+     提供 webpack 一些参数，来 polyfill 或者设定特定的 node 参数
+     ```js
+     module.exports = {
+       node: {
+         global: false,
+         __filename: false,
+         __dirname: false,
+       },
+     };
+     ```
+
 ## Questions
 
 [ ] chunks 的基本概念
